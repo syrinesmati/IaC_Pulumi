@@ -27,8 +27,8 @@ Installer les outils suivants avant de commencer :
 ### 1. Cloner le projet
 
 ```bash
-git clone <url-du-repo>
-cd tp3-devops
+git clone https://github.com/syrinesmati/IaC_Pulumi
+cd IaC_Pulumi
 ```
 
 ### 2. Installer les dépendances Node
