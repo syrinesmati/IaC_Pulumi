@@ -1,0 +1,12 @@
+config:
+  aws:region: us-east-1
+  aws:accessKey: test
+  aws:secretKey: test
+  aws:skipCredentialsValidation: "true"
+  aws:skipRequestingAccountId: "true"
+  tp-pulumi-iac:dbName: devops_db
+  tp-pulumi-iac:dbUser: devops_user
+  tp-pulumi-iac:dbPassword:
+    secure: AAABAFuPL/1mXo9jXYQnEYJKexULq740BtK/+TKunCY5ZItmElw3GnHFmR+SAMMQhA==
+  tp-pulumi-iac:appPortExternal: "8080"
+  aws:endpoints: '[{"s3":"http://localhost:4566"}]'

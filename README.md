@@ -1,61 +1,192 @@
- # AWS TypeScript Pulumi Template
+# 🚀 TP Pulumi IaC — Infrastructure as Code Locale
 
- A minimal Pulumi template for provisioning AWS infrastructure using TypeScript. This template creates an Amazon S3 bucket and exports its name.
+Projet d'Infrastructure as Code (IaC) utilisant **Pulumi (TypeScript)** pour déployer localement :
+- Un conteneur **PostgreSQL** (base de données)
+- Un conteneur **Nginx** (application web)
+- Un **bucket S3** simulé via **LocalStack**
 
- ## Prerequisites
+Tout tourne en local — aucun compte cloud requis.
 
- - Pulumi CLI (>= v3): https://www.pulumi.com/docs/get-started/install/
- - Node.js (>= 14): https://nodejs.org/
- - AWS credentials configured (e.g., via `aws configure` or environment variables)
+---
 
- ## Getting Started
+## 📋 Prérequis
 
- 1. Initialize a new Pulumi project:
+Installer les outils suivants avant de commencer :
 
-    ```bash
-    pulumi new aws-typescript
-    ```
+| Outil | Version | Lien |
+|---|---|---|
+| Node.js | ≥ 18 | https://nodejs.org |
+| Docker Desktop | dernière | https://www.docker.com/products/docker-desktop |
+| Pulumi CLI | dernière | https://www.pulumi.com/docs/install/ |
+| Git | dernière | https://git-scm.com |
 
-    Follow the prompts to set your:
-    - Project name
-    - Project description
-    - AWS region (defaults to `us-east-1`)
+---
 
- 2. Preview and deploy your infrastructure:
+## ⚙️ Installation & Configuration
 
-    ```bash
-    pulumi preview
-    pulumi up
-    ```
+### 1. Cloner le projet
 
- 3. When you're finished, tear down your stack:
+```bash
+git clone <url-du-repo>
+cd tp3-devops
+```
 
-    ```bash
-    pulumi destroy
-    pulumi stack rm
-    ```
+### 2. Installer les dépendances Node
 
- ## Project Layout
+```bash
+npm install
+```
 
- - `Pulumi.yaml` — Pulumi project and template metadata
- - `index.ts` — Main Pulumi program (creates an S3 bucket)
- - `package.json` — Node.js dependencies
- - `tsconfig.json` — TypeScript compiler options
+### 3. Démarrer LocalStack (simulateur AWS local)
 
- ## Configuration
+```bash
+docker run --rm -d \
+  -p 4566:4566 \
+  -p 4510-4559:4510-4559 \
+  --name localstack \
+  localstack/localstack
+```
 
- | Key           | Description                             | Default     |
- | ------------- | --------------------------------------- | ----------- |
- | `aws:region`  | The AWS region to deploy resources into | `us-east-1` |
+> ⏳ Attendre ~10 secondes que LocalStack démarre complètement.
 
- Use `pulumi config set <key> <value>` to customize configuration.
+### 4. Se connecter à Pulumi
 
- ## Next Steps
+```bash
+pulumi login
+```
 
- - Extend `index.ts` to provision additional resources (e.g., VPCs, Lambda functions, DynamoDB tables).
- - Explore [Pulumi AWSX](https://www.pulumi.com/docs/reference/pkg/awsx/) for higher-level AWS components.
- - Consult the [Pulumi documentation](https://www.pulumi.com/docs/) for more examples and best practices.
+> Créer un compte gratuit sur https://app.pulumi.com si besoin.
 
- ## Getting Help
+### 5. Sélectionner le stack `dev`
 
- If you encounter any issues or have suggestions, please open an issue in this repository.
+```bash
+pulumi stack select dev
+# Si le stack n'existe pas encore :
+pulumi stack init dev
+```
+
+### 6. Configurer les variables
+
+```bash
+pulumi config set aws:accessKey test
+pulumi config set aws:secretKey test
+pulumi config set aws:skipCredentialsValidation true
+pulumi config set aws:skipRequestingAccountId true
+pulumi config set aws:region us-east-1
+pulumi config set aws:endpoints '[{"s3":"http://localhost:4566"}]'
+
+pulumi config set tp-pulumi-iac:dbName devops_db
+pulumi config set tp-pulumi-iac:dbUser devops_user
+pulumi config set --secret tp-pulumi-iac:dbPassword strongpassword123
+pulumi config set tp-pulumi-iac:appPortExternal 8080
+```
+
+---
+
+## 🔄 Cycle de Vie du Déploiement (DLC)
+
+### Étape 1 — Preview (simulation)
+
+```bash
+pulumi preview
+```
+
+> Affiche les ressources qui seront créées, sans rien modifier.
+
+### Étape 2 — Déploiement
+
+```bash
+pulumi up
+```
+
+> Taper `yes` pour confirmer. Crée les 8 ressources.
+
+### Étape 3 — Validation
+
+Vérifier que l'application Nginx tourne :
+```bash
+curl http://localhost:8080
+```
+
+Vérifier que le bucket S3 LocalStack fonctionne :
+```bash
+curl http://localhost:4566/tp-static-files/index.html
+```
+
+### Étape 4 — Destruction (nettoyage)
+
+```bash
+pulumi destroy
+```
+
+> Taper `yes` pour confirmer. Supprime tous les conteneurs et ressources.
+
+---
+
+## 📁 Structure du Projet
+
+```
+tp3-devops/
+├── index.ts            # Code Pulumi principal (ressources)
+├── Dockerfile_app      # Image Nginx personnalisée
+├── Pulumi.yaml         # Métadonnées du projet
+├── Pulumi.dev.yaml     # Config du stack dev
+├── package.json        # Dépendances Node
+└── tsconfig.json       # Config TypeScript
+```
+
+---
+
+## 🏗️ Ressources Déployées
+
+| Ressource | Type | Description |
+|---|---|---|
+| `tp-iac-network` | Docker Network | Réseau partagé entre les conteneurs |
+| `tp-db-postgres` | Docker Container | Base de données PostgreSQL |
+| `tp-app-web` | Docker Container | Application web Nginx (port 8080) |
+| `tp-static-files` | S3 Bucket (LocalStack) | Hébergement de fichiers statiques |
+
+---
+
+## 📤 Outputs
+
+Après `pulumi up`, les informations suivantes sont affichées :
+
+| Output | Valeur |
+|---|---|
+| `appAccessUrl` | `http://localhost:8080` |
+| `dbContainerName` | `tp-db-postgres` |
+| `networkName` | `tp-iac-network` |
+| `bucketName` | `tp-static-files` |
+| `bucketEndpoint` | `http://localhost:4566/tp-static-files/index.html` |
+
+Pour les revoir à tout moment :
+```bash
+pulumi stack output
+```
+
+---
+
+## ❗ Problèmes Fréquents
+
+**Erreur `invalid character` sur aws:endpoints`**
+→ Éditer directement `Pulumi.dev.yaml` et s'assurer que la ligne est :
+```yaml
+aws:endpoints: '[{"s3":"http://localhost:4566"}]'
+```
+
+**LocalStack non démarré**
+→ Vérifier avec `docker ps` que le container `localstack` tourne sur le port `4566`.
+
+**Port 8080 déjà utilisé**
+→ Changer le port : `pulumi config set tp-pulumi-iac:appPortExternal 8081`
+
+---
+
+## 🛠️ Technologies Utilisées
+
+- **Pulumi** — Infrastructure as Code (TypeScript)
+- **Docker** — Conteneurisation
+- **LocalStack** — Simulation AWS en local
+- **PostgreSQL** — Base de données
+- **Nginx** — Serveur web

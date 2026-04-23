@@ -1,0 +1,12 @@
+FROM alpine:latest
+
+RUN apk update && \
+    apk add nginx && \
+    rm -rf /var/cache/apk/*
+
+RUN echo "<h1>Application Deployed via Pulumi IaC!</h1>" > \
+    /var/www/localhost/htdocs/index.html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

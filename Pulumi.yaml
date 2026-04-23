@@ -1,0 +1,10 @@
+name: tp-pulumi-iac
+description: TP IaC DevOps
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript
